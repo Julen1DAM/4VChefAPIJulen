@@ -59,10 +59,10 @@ INSERT INTO `recipe_nutrients` (`recipe_id`, `nutrient_type_id`, `quantity`, `de
 (2, 2, 12.00, NULL),
 (2, 3, 15.00, NULL);
 
-INSERT INTO `ratings` (`rate`, `recipe_id`, `created_at`, `deleted_at`) VALUES
-(5, 1, NOW(), NULL),
-(4, 1, NOW(), NULL),
-(5, 1, NOW(), NULL),
-(3, 2, NOW(), NULL),
-(4, 2, NOW(), NULL),
-(5, 2, NOW(), NULL);
+INSERT INTO `ratings` (`rate`, `recipe_id`, `created_at`, `deleted_at`, `ip`) VALUES
+(5, 1, NOW(), NULL, '127.0.0.1'),
+(4, 1, NOW(), NULL, '127.0.0.2'),
+(5, 1, NOW(), NULL, '127.0.0.3'),
+(3, 2, NOW(), NULL, '127.0.0.1'),
+(4, 2, NOW(), NULL, '127.0.0.2'),
+(5, 2, NOW(), NULL, '127.0.0.3');

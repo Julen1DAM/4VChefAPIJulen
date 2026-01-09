@@ -15,4 +15,16 @@ class RecipeRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Recipe::class);
     }
+
+    /**
+     * @return Recipe[] Devuelve un array de recetas activas (no eliminadas)
+     */
+    public function findAllActive(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.deleted_at IS NULL')
+            ->orderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

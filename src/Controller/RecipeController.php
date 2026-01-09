@@ -20,10 +20,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class RecipeController extends AbstractController
 {
     #[Route('', name: 'list', methods: ['GET'])]
-    public function list(RecipeRepository $recipeRepository): JsonResponse
+    public function list(Request $request, RecipeRepository $recipeRepository): JsonResponse
     {
-        // Filtra las recetas que no estén eliminadas
-        $recipes = $recipeRepository->findAllActive();
+        $typeId = $request->query->get('type');
+
+        // Filtra las recetas que no estén eliminadas (y opcionalmente por tipo)
+        $recipes = $recipeRepository->findAllActive($typeId);
 
         $data = [];
         foreach ($recipes as $recipe) {
@@ -46,19 +48,19 @@ class RecipeController extends AbstractController
         $recipe = $recipeRepository->find($id);
 
         if (!$recipe) {
-            return $this->json(['error' => 'Recipe not found'], Response::HTTP_NOT_FOUND);
+            return $this->json(['error' => 'Receta no encontrada'], Response::HTTP_NOT_FOUND);
         }
 
         if ($recipe->getDeletedAt()) {
              // Si la receta ya está eliminada, podría devolver 404 o éxito. 
              // Devuelve 404 como solicitado "validar que la receta a eliminar existe" implica excluir las recetas eliminadas si las tratamos como ausentes.
-             return $this->json(['error' => 'Recipe not found'], Response::HTTP_NOT_FOUND);
+             return $this->json(['error' => 'Receta no encontrada'], Response::HTTP_NOT_FOUND);
         }
 
         $recipe->setDeletedAt(new \DateTime());
         $em->flush();
 
-        return $this->json(['message' => 'Recipe deleted successfully'], Response::HTTP_OK);
+        return $this->json(['message' => 'Receta eliminada correctamente'], Response::HTTP_OK);
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
@@ -73,26 +75,26 @@ class RecipeController extends AbstractController
 
         // Validaciones básicas
         if (empty($data['title']) || empty($data['number_diner'])) {
-            return $this->json(['error' => 'Title and number of diners are required'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'Un titulo y numero de comensales son obligatorios'], Response::HTTP_BAD_REQUEST);
         }
 
         if (empty($data['recipe_type_id'])) {
-             return $this->json(['error' => 'Recipe Type ID is required'], Response::HTTP_BAD_REQUEST);
+             return $this->json(['error' => 'Un tipo de receta es obligatorio'], Response::HTTP_BAD_REQUEST);
         }
 
         $recipeType = $recipeTypeRepository->find($data['recipe_type_id']);
         if (!$recipeType) {
-            return $this->json(['error' => 'Invalid Recipe Type'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'El tipo de receta es obligatorio'], Response::HTTP_BAD_REQUEST);
         }
 
         // Validación de ingredientes (al menos 1)
         if (empty($data['ingredients']) || !is_array($data['ingredients']) || count($data['ingredients']) < 1) {
-            return $this->json(['error' => 'At least one ingredient is required'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'Debe tener al menos un ingrediente'], Response::HTTP_BAD_REQUEST);
         }
 
         // Validación de pasos (al menos 1)
         if (empty($data['steps']) || !is_array($data['steps']) || count($data['steps']) < 1) {
-            return $this->json(['error' => 'At least one step is required'], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'Debe tener al menos un paso'], Response::HTTP_BAD_REQUEST);
         }
 
         // Crear nueva receta
@@ -106,7 +108,7 @@ class RecipeController extends AbstractController
         // Añadir ingredientes
         foreach ($data['ingredients'] as $ingData) {
             if (empty($ingData['name']) || empty($ingData['quantity']) || empty($ingData['unit'])) {
-                 return $this->json(['error' => 'Invalid ingredient data. Name, quantity, and unit are required.'], Response::HTTP_BAD_REQUEST);
+                 return $this->json(['error' => 'Los ingredientes deben tener nombre, cantidad y unidad'], Response::HTTP_BAD_REQUEST);
             }
             $ingredient = new Ingredient();
             $ingredient->setName($ingData['name']);
@@ -119,7 +121,7 @@ class RecipeController extends AbstractController
         // Añadir pasos
         foreach ($data['steps'] as $stepData) {
             if (empty($stepData['description']) || !isset($stepData['order_step'])) {
-                return $this->json(['error' => 'Invalid step data. Description and order_step are required.'], Response::HTTP_BAD_REQUEST);
+                return $this->json(['error' => 'Los pasos deben tener una descripción y un orden'], Response::HTTP_BAD_REQUEST);
             }
             $step = new Step();
             $step->setDescription($stepData['description']);
@@ -132,12 +134,12 @@ class RecipeController extends AbstractController
         if (!empty($data['nutrients']) && is_array($data['nutrients'])) {
             foreach ($data['nutrients'] as $nutData) {
                 if (empty($nutData['nutrient_type_id']) || empty($nutData['quantity'])) {
-                    return $this->json(['error' => 'Invalid nutrient data'], Response::HTTP_BAD_REQUEST);
+                    return $this->json(['error' => 'Los nutrientes deben tener tipo y cantidad'], Response::HTTP_BAD_REQUEST);
                 }
 
                 $nutrientType = $nutrientTypeRepository->find($nutData['nutrient_type_id']);
                 if (!$nutrientType) {
-                    return $this->json(['error' => 'Invalid Nutrient Type ID: ' . $nutData['nutrient_type_id']], Response::HTTP_BAD_REQUEST);
+                    return $this->json(['error' => 'El tipo de nutriente es obligatorio'], Response::HTTP_BAD_REQUEST);
                 }
 
                 $recipeNutrient = new RecipeNutrient();
@@ -150,6 +152,6 @@ class RecipeController extends AbstractController
 
         $em->flush();
 
-        return $this->json(['message' => 'Recipe created successfully', 'id' => $recipe->getId()], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Receta creada correctamente', 'id' => $recipe->getId()], Response::HTTP_CREATED);
     }
 }

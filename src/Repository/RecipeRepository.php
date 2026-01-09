@@ -19,12 +19,17 @@ class RecipeRepository extends ServiceEntityRepository
     /**
      * @return Recipe[] Devuelve un array de recetas activas (no eliminadas)
      */
-    public function findAllActive(): array
+    public function findAllActive(?int $typeId = null): array
     {
-        return $this->createQueryBuilder('r')
+        $qb = $this->createQueryBuilder('r')
             ->andWhere('r.deleted_at IS NULL')
-            ->orderBy('r.id', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('r.id', 'ASC');
+
+        if ($typeId) {
+             $qb->andWhere('r.recipe_type = :typeId')
+                ->setParameter('typeId', $typeId);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 }

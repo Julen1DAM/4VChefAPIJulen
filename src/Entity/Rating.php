@@ -28,6 +28,9 @@ class Rating
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $deleted_at = null;
 
+    #[ORM\Column(length: 45)]
+    private ?string $ip = null;
+
     public function __construct()
     {
         $this->created_at = new \DateTime();
@@ -79,6 +82,17 @@ class Rating
     public function setDeletedAt(?\DateTimeInterface $deleted_at): static
     {
         $this->deleted_at = $deleted_at;
+        return $this;
+    }
+
+    public function getIp(): ?string
+    {
+        return $this->ip;
+    }
+
+    public function setIp(string $ip): static
+    {
+        $this->ip = $ip;
         return $this;
     }
 }

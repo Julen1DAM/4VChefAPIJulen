@@ -15,4 +15,18 @@ class RatingRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Rating::class);
     }
+
+    public function hasUserRated(int $recipeId, string $ip): bool
+    {
+        $result = $this->createQueryBuilder('r')
+            ->select('count(r.id)')
+            ->where('r.recipe = :recipeId')
+            ->andWhere('r.ip = :ip')
+            ->setParameter('recipeId', $recipeId)
+            ->setParameter('ip', $ip)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result > 0;
+    }
 }
